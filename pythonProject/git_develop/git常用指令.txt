@@ -1,0 +1,8 @@
+将远程仓库的文件同步至本地
+git pull
+添加更新文件至缓存区
+git add .
+提交文件
+git commit --m ""
+远程上传文件
+git push

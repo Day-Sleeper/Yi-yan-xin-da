@@ -1,0 +1,23 @@
+CREATE (n:人物 { 姓名: '香取慎吾' })
+CREATE (n:人物 { 姓名: 'dfasdas' })
+CREATE (n:人物 { 姓名: 'dada' })
+
+CREATE (p:Person {
+    name: "李华",
+    address: "广州市天河区",
+    phone: "135-XXXX-XXXX",
+    email: "lihua@email.com",
+    linkedIn: "LinkedIn.com/in/lihua"
+})
+
+CREATE (e:Education {
+    school: "华南理工大学",
+    degree: "市场营销学士",
+    period: "2014年9月 - 2018年7月"
+})
+MERGE (p)-[:HAS_EDUCATION]->(e)
+
+
+
+
+
