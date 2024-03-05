@@ -37,3 +37,14 @@ org.neo4j.bolt.protocol.error.streaming.BoltStreamingWriteException: Failed to t
 	at java.lang.Thread.run(Thread.java:842) [?:?]
 Caused by: io.netty.channel.StacklessClosedChannelException
 	at io.netty.channel.AbstractChannel$AbstractUnsafe.write(Object, ChannelPromise)(Unknown Source) ~[netty-transport-4.1.101.Final.jar:4.1.101.Final]
+2024-03-05 05:32:22.035+0000 INFO  Logging config in use: File 'D:\Workplaces\Computer_contest\Yi-yan-xin-da\Neo4j\neo4j-community-5.17.0-windows\neo4j-community-5.17.0\conf\user-logs.xml'
+2024-03-05 05:32:22.192+0000 INFO  Starting...
+2024-03-05 05:32:26.654+0000 INFO  This instance is ServerId{30646512} (30646512-2fd1-4236-a383-4c31cdcf509b)
+2024-03-05 05:32:29.238+0000 INFO  ======== Neo4j 5.17.0 ========
+2024-03-05 05:32:34.894+0000 INFO  Bolt enabled on localhost:7687.
+2024-03-05 05:32:36.931+0000 INFO  HTTP enabled on localhost:7474.
+2024-03-05 05:32:36.933+0000 INFO  Remote interface available at http://localhost:7474/
+2024-03-05 05:32:36.943+0000 INFO  id: CB171D57BCA97AE4ED93B8C4ECE3071963BEA215341B40ED230E8AEB21389A57
+2024-03-05 05:32:36.943+0000 INFO  name: system
+2024-03-05 05:32:36.944+0000 INFO  creationDate: 2024-03-04T05:34:28.904Z
+2024-03-05 05:32:36.944+0000 INFO  Started.
