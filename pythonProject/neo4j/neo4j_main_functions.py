@@ -1,5 +1,3 @@
-from neo4j import GraphDatabase, RoutingControl
-import neo4j_json_edit as nje
 """
 所有点数据必须要包含至少一个属性为其名称/姓名/name等
 """
@@ -48,9 +46,16 @@ def MAIN_DATA_LOAD(file_path):
     MAIN_DATA = nje.json_load(file_path)
 
 
-def search_point(database_name,point_name):
+def MAIN_DATA_SAVE(file_path):
+    global MAIN_DATA
+    """将主数据库存储至本地"""
+    MAIN_DATA = nje.json_save(MAIN_DATA, file_path)
+
+
+def search_point(database_name, point_name):
     for key in MAIN_DATA[database_name]["点数据"][point_name].keys:
         pass
+
 
 def clear_all_data(driver):
     """
@@ -59,20 +64,17 @@ def clear_all_data(driver):
     driver.execute_query("match (n) detach delete n", database_="neo4j", )
 
 
-def add_point(driver, database_name, point_name, main_label, name_call, name, attribute_name, attribute_value,):
-    """创建点"""
-    input_cyphel = "CREATE (a:{main_label} {{ {name_call}: '{name}', {attribute_name}: '{attribute_value}' }}) "\
-        .format(point_name=point_name,
-                main_label=main_label,
-                attribute_name=attribute_name,
-                attribute_value=attribute_value,
+def add_point(driver, database_name, name_call, point_name, main_label, attribute_name, attribute_value):
+    """需要指定neo4j驱动器，数据库名称，点名称的叫法，点的名称，点的主要分类标签，属性的名称和属性的值，"""
+    input_cyphel = "MERGE (a:{main_label} {{ {name_call}: '{point_name}', {attribute_name}: '{attribute_value}' }}) " \
+        .format(main_label=main_label,
                 name_call=name_call,
-                name=name)
-    MAIN_DATA[database_name]["点数据"][point_name] = {"名称叫法":name_call,
-                                                      name_call: name,
-                                                      "主标签": main_label,
-                                                      attribute_name: attribute_value}
-    driver.execute_query(input_cyphel, database_="neo4j",)
+                point_name=point_name,
+                attribute_name=attribute_name,
+                attribute_value=attribute_value)
+    MAIN_DATA[database_name]["点数据"][point_name] = {"主标签": main_label, "名称叫法": name_call,
+                                                      name_call: point_name, attribute_name: attribute_value}
+    driver.execute_query(input_cyphel, database_="neo4j", )
 
 
 def add_relationship(driver, database_name, relationship_start, relationship_end, relationship_label, attribute_name, attribute_value):
@@ -86,5 +88,7 @@ def add_relationship(driver, database_name, relationship_start, relationship_end
                 relationship_start_name_call=MAIN_DATA[database_name]["点数据"][relationship_start]["名称叫法"],
                 relationship_end_name_call=MAIN_DATA[database_name]["点数据"][relationship_end]["名称叫法"],
                 relationship_label=relationship_label)
-    MAIN_DATA[database_name]["边数据"][relationship_label] = {"主标签": relationship_label, attribute_name: attribute_value}
-    driver.execute_query(input_cypher, database_="neo4j",)
+    MAIN_DATA[database_name]["边数据"][relationship_label] = {"关系": relationship_start + "->" + relationship_end,
+                                                             "主标签": relationship_label,
+                                                             attribute_name: attribute_value}
+    driver.execute_query(input_cypher, database_="neo4j", )
