@@ -2,15 +2,15 @@
 from typing import Optional
 import neo4j_json_edit as nje
 
-global MAIN_DATA, DATABASE_NAME, AUTH, URL
+global main_data, database_name, auth, url
 
 
-def MAIN_DATA_ini(file_path):
+def main_data_ini(file_path):
     """用于初始化部分数据库，不会删除其他数据库的信息，但会清空这一数据库"""
-    global MAIN_DATA, DATABASE_NAME, AUTH, URL
-    MAIN_DATA = {"URL": "bolt://localhost:7687", "默认用户": ("neo4j", "ai123hr456")}
-    URL = "bolt://localhost:7687"
-    nje.json_save(MAIN_DATA, file_path)
+    global main_data, database_name, auth, url
+    main_data = {"url": "bolt://localhost:7687", "默认用户": ("neo4j", "ai123hr456")}
+    url = "bolt://localhost:7687"
+    nje.json_save(main_data, file_path)
 
 
 def DATABASE_ini(database_name):
@@ -18,45 +18,47 @@ def DATABASE_ini(database_name):
     point_data = {}
     relationship_data = {}
     classification_data = {"点数据": point_data, "边数据": relationship_data}
-    MAIN_DATA[database_name] = classification_data
+    main_data[database_name] = classification_data
 
 
-def user_login(AUTH_id=None, AUTH_password=None, database_name=None):
+def user_login(auth_id=None, auth_password=None, database_name=None):
     """处理用户登录的id和密码数据，可选择性接收输入"""
-    global MAIN_DATA, DATABASE_NAME, AUTH, URL
-    if AUTH_id is None:
-        AUTH_id = input("您好，请登录您的个人数据账户\n账号(输入0为默认账户)：")
-    if AUTH_id == "0" or AUTH_id is None:
-        AUTH_id = "neo4j"
-    if AUTH_password is None:
-        AUTH_password = input("密码（若为默认账号请输入0）")
-    if AUTH_password == "0" or AUTH_password is None:
-        AUTH_password = "ai123hr456"
+    global main_data, database_name, auth, url
+    if auth_id is None:
+        auth_id = input("您好，请登录您的个人数据账户\n账号(输入0为默认账户)：")
+    if auth_id == "0" or auth_id is None:
+        auth_id = "neo4j"
+    if auth_password is None:
+        auth_password = input("密码（若为默认账号请输入0）")
+    if auth_password == "0" or auth_password is None:
+        auth_password = "ai123hr456"
     if database_name is None:
         database_name = input("创建或读取您的数据库：")
     if database_name == "0" or database_name is None:
         database_name = "test"
-    DATABASE_NAME = database_name
-    AUTH = (AUTH_id, AUTH_password)
-    if not (DATABASE_NAME in MAIN_DATA):  # 如果没有此数据库则初始化数据库
-        DATABASE_ini(DATABASE_NAME)
-    URL = "bolt://localhost:7687"
-    AUTH = ("neo4j", "ai123hr456")
+    database_name = database_name
+    auth = (auth_id, auth_password)
+    if not (database_name in main_data):  # 如果没有此数据库则初始化数据库
+        DATABASE_ini(database_name)
+    url = "bolt://localhost:7687"
+    auth = ("neo4j", "ai123hr456")
+
 
 def change_operating_database(database_name):
-    global MAIN_DATA, DATABASE_NAME, AUTH, URL
-    DATABASE_NAME = database_name
+    global main_data, database_name, auth, url
+    database_name = database_name
 
-def MAIN_DATA_LOAD(file_path):
-    global MAIN_DATA
+
+def main_data_LOAD(file_path):
+    global main_data
     """从已存储的主数据库中读取数据"""
-    MAIN_DATA = nje.json_load(file_path)
+    main_data = nje.json_load(file_path)
 
 
-def MAIN_DATA_SAVE(file_path):
-    global MAIN_DATA
+def main_data_SAVE(file_path):
+    global main_data
     """将主数据库存储至本地"""
-    MAIN_DATA = nje.json_save(MAIN_DATA, file_path)
+    main_data = nje.json_save(main_data, file_path)
 
 
 def clear_all_data(driver):
@@ -75,7 +77,7 @@ def add_point(driver,
 
        函数的基本原理是将输入的形参转换为标准的cypher语句并存储在独立的数据库之中
        Args:
-           driver (driver): neo4j驱动程序，由语句： with GraphDatabase.driver(nmf.URL, auth=nmf.AUTH) as driver生成
+           driver (driver): neo4j驱动程序，由语句： with GraphDatabase.driver(nmf.url, auth=nmf.auth) as driver生成
            name_call (str):点数据的名称指定方式
            point_name (str):点数据的名称
            main_label (str):点数据对象主要的分类标签
@@ -87,10 +89,10 @@ def add_point(driver,
                 name_call=name_call,
                 point_name=point_name,
                 attribute_dic=attribute_preprocess(attribute_dic))
-    MAIN_DATA[DATABASE_NAME]["点数据"][point_name] = {"主标签": main_label, "名称叫法": name_call, name_call: point_name}
+    main_data[database_name]["点数据"][point_name] = {"主标签": main_label, "名称叫法": name_call, name_call: point_name}
     if type(attribute_dic) is dict:
         for key in attribute_dic.keys():
-            MAIN_DATA[DATABASE_NAME]["点数据"][point_name][key] = attribute_dic[key]
+            main_data[database_name]["点数据"][point_name][key] = attribute_dic[key]
     driver.execute_query(input_cypher, database_="neo4j", )
 
 
@@ -103,8 +105,7 @@ def add_relationship(driver,
 
     函数的基本原理是将输入的形参转换为标准的cypher语句并存储在独立的数据库之中
     Args:
-        driver (driver): neo4j驱动程序，由语句： with GraphDatabase.driver(nmf.URL, auth=nmf.AUTH) as driver生成
-        database_name (str):数据库的名称
+        driver (driver): neo4j驱动程序，由语句： with GraphDatabase.driver(nmf.url, auth=nmf.auth) as driver生成
         relationship_start (str):关系开始的点的名称
         relationship_end (str):关系结束的点的名称
         relationship_label (str):关系的名称或标签
@@ -116,15 +117,15 @@ def add_relationship(driver,
     MERGE (a)-[r:{relationship_label} {{{attribute_dic}}}]->(b)""" \
         .format(relationship_start=relationship_start,
                 relationship_end=relationship_end,
-                relationship_start_name_call=MAIN_DATA[DATABASE_NAME]["点数据"][relationship_start]["名称叫法"],
-                relationship_end_name_call=MAIN_DATA[DATABASE_NAME]["点数据"][relationship_end]["名称叫法"],
+                relationship_start_name_call=main_data[database_name]["点数据"][relationship_start]["名称叫法"],
+                relationship_end_name_call=main_data[database_name]["点数据"][relationship_end]["名称叫法"],
                 relationship_label=relationship_label,
                 attribute_dic=attribute_preprocess(attribute_dic))
-    MAIN_DATA[DATABASE_NAME]["边数据"][relationship_name] = \
+    main_data[database_name]["边数据"][relationship_name] = \
         {"关系": relationship_start + "->" + relationship_end,
          "主标签": relationship_label}
     for key in attribute_dic.keys():
-        MAIN_DATA[DATABASE_NAME]["边数据"][relationship_name][key] = attribute_dic[key]
+        main_data[database_name]["边数据"][relationship_name][key] = attribute_dic[key]
     driver.execute_query(input_cypher, database_="neo4j", )
 
 
@@ -132,15 +133,15 @@ def add_point_attribute(driver,
                         database_name,
                         point_name,
                         attribute_dic):
-    if point_name in MAIN_DATA[database_name]["点数据"]:
+    if point_name in main_data[database_name]["点数据"]:
         for key in attribute_dic.keys():
             input_cypher = """MATCH (a {{{name_call}:'{point_name}'}})
-                              SET a.{attribute_name} = '{attribute_value}' """\
-                .format(name_call=MAIN_DATA[database_name]["点数据"][point_name]["名称叫法"],
+                              SET a.{attribute_name} = '{attribute_value}' """ \
+                .format(name_call=main_data[database_name]["点数据"][point_name]["名称叫法"],
                         point_name=point_name,
                         attribute_name=key,
                         attribute_value=attribute_dic[key])
-            MAIN_DATA[database_name]["点数据"][point_name][key] = attribute_dic[key]
+            main_data[database_name]["点数据"][point_name][key] = attribute_dic[key]
             driver.execute_query(input_cypher, database_="neo4j", )
 
 
@@ -151,18 +152,18 @@ def add_relationship_attribute(driver,
                                relationship_end,
                                attribute_dic):
     relationship_name = relationship_label + '：' + relationship_start + "->" + relationship_end
-    if relationship_name in MAIN_DATA[database_name]["边数据"]:
+    if relationship_name in main_data[database_name]["边数据"]:
         for key in attribute_dic.keys():
             input_cypher = """MATCH (a {{{relationship_start_name_call}:'{relationship_start}'}})-[r:{relationship_label}]->(b {{{relationship_end_name_call}:'{relationship_end}'}})
-                              SET r.{attribute_name} = '{attribute_value}'"""\
+                              SET r.{attribute_name} = '{attribute_value}'""" \
                 .format(relationship_start=relationship_start,
                         relationship_end=relationship_end,
-                        relationship_start_name_call=MAIN_DATA[database_name]["点数据"][relationship_start]["名称叫法"],
-                        relationship_end_name_call=MAIN_DATA[database_name]["点数据"][relationship_end]["名称叫法"],
+                        relationship_start_name_call=main_data[database_name]["点数据"][relationship_start]["名称叫法"],
+                        relationship_end_name_call=main_data[database_name]["点数据"][relationship_end]["名称叫法"],
                         relationship_label=relationship_label,
                         attribute_name=key,
                         attribute_value=attribute_dic[key])
-            MAIN_DATA[database_name]["边数据"][relationship_name][key] = attribute_dic[key]
+            main_data[database_name]["边数据"][relationship_name][key] = attribute_dic[key]
             driver.execute_query(input_cypher, database_="neo4j", )
     pass
 
@@ -177,4 +178,3 @@ def attribute_preprocess(attribute_dic: Optional[dict]) -> dict | str:
         """
     if type(attribute_dic) is dict:
         return ', '.join(f"{k}: '{v}'" for k, v in attribute_dic.items())
-

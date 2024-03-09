@@ -1,5 +1,5 @@
 {
-    "URL": "bolt://localhost:7687",
+    "url": "bolt://localhost:7687",
     "默认用户": [
         "neo4j",
         "ai123hr456"
