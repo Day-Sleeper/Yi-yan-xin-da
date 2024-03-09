@@ -64,31 +64,96 @@ def clear_all_data(driver):
     driver.execute_query("match (n) detach delete n", database_="neo4j", )
 
 
-def add_point(driver, database_name, name_call, point_name, main_label, attribute_name, attribute_value):
+# def add_point(driver, database_name, name_call, point_name, main_label, attribute_name, attribute_value):
+#     """需要指定neo4j驱动器，数据库名称，点名称的叫法，点的名称，点的主要分类标签，属性的名称和属性的值，"""
+#     input_cypher = "MERGE (a:{main_label} {{ {name_call}: '{point_name}', {attribute_name}: '{attribute_value}' }}) " \
+#         .format(main_label=main_label,
+#                 name_call=name_call,
+#                 point_name=point_name,
+#                 attribute_name=attribute_name,
+#                 attribute_value=attribute_value)
+#     MAIN_DATA[database_name]["点数据"][point_name] = {"主标签": main_label, "名称叫法": name_call,
+#                                                       name_call: point_name, attribute_name: attribute_value}
+#     driver.execute_query(input_cypher, database_="neo4j", )
+
+def add_point(driver, database_name, name_call, point_name, main_label, attribute_dic):
     """需要指定neo4j驱动器，数据库名称，点名称的叫法，点的名称，点的主要分类标签，属性的名称和属性的值，"""
-    input_cyphel = "MERGE (a:{main_label} {{ {name_call}: '{point_name}', {attribute_name}: '{attribute_value}' }}) " \
+    input_cypher = "MERGE (a:{main_label} {{ {name_call}: '{point_name}', {attribute_dic} }}) " \
         .format(main_label=main_label,
                 name_call=name_call,
                 point_name=point_name,
-                attribute_name=attribute_name,
-                attribute_value=attribute_value)
+                attribute_dic=attribute_preprocess(attribute_dic))
     MAIN_DATA[database_name]["点数据"][point_name] = {"主标签": main_label, "名称叫法": name_call,
-                                                      name_call: point_name, attribute_name: attribute_value}
-    driver.execute_query(input_cyphel, database_="neo4j", )
+                                                      name_call: point_name}
+    for key in attribute_dic.keys():
+        MAIN_DATA[database_name]["点数据"][point_name][key] = attribute_dic[key]
+    driver.execute_query(input_cypher, database_="neo4j", )
 
 
-def add_relationship(driver, database_name, relationship_start, relationship_end, relationship_label, attribute_name, attribute_value):
-    """创建两个点之间关系"""
+def add_relationship(driver,
+                     database_name,
+                     relationship_start,
+                     relationship_end,
+                     relationship_label,
+                     attribute_dic='') -> None:
+    """为neo4j数据库中初始化添加数据关系，必要的数据有：neo4j驱动器，数据库名称，关系起始点，关系终止点，关系主标签，可选的数据有属性字典
+
+    函数的基本原理是将输入的形参转换为标准的cypher语句并存储在独立的数据库之中
+    Args:
+        driver (driver): neo4j驱动程序，由语句： with GraphDatabase.driver(nmf.URL, auth=nmf.AUTH) as driver生成
+        database_name (str): 数据库的名称
+        relationship_start (str)：关系开始的点的名称
+        relationship_end (str)：关系结束的点的名称
+        relationship_label (str):关系的名称或标签
+        attribute_dic (optional[dict])：存储属性的字典
+
+    """
     input_cypher = """MATCH (a:{relationship_start_main_label} {{{relationship_start_name_call}: '{relationship_start}'}}), (b:{relationship_end_main_label} {{{relationship_end_name_call}: '{relationship_end}'}})
-    MERGE (a)-[r:{relationship_label}]->(b)""" \
+    MERGE (a)-[r:{relationship_label} {{{attribute_dic}}}]->(b)""" \
         .format(relationship_start=relationship_start,
                 relationship_end=relationship_end,
                 relationship_start_main_label=MAIN_DATA[database_name]["点数据"][relationship_start]["主标签"],
                 relationship_end_main_label=MAIN_DATA[database_name]["点数据"][relationship_end]["主标签"],
                 relationship_start_name_call=MAIN_DATA[database_name]["点数据"][relationship_start]["名称叫法"],
                 relationship_end_name_call=MAIN_DATA[database_name]["点数据"][relationship_end]["名称叫法"],
-                relationship_label=relationship_label)
-    MAIN_DATA[database_name]["边数据"][relationship_label] = {"关系": relationship_start + "->" + relationship_end,
-                                                             "主标签": relationship_label,
-                                                             attribute_name: attribute_value}
+                relationship_label=relationship_label,
+                attribute_dic=attribute_preprocess(attribute_dic))
+    print(input_cypher)
+    MAIN_DATA[database_name]["边数据"][relationship_label + '：' + relationship_start + "->" + relationship_end] = \
+        {"关系": relationship_start + "->" + relationship_end,
+         "主标签": relationship_label}
+    for key in attribute_dic.keys():
+        MAIN_DATA[database_name]["边数据"][relationship_label + '：' + relationship_start + "->" + relationship_end][
+            key] = \
+            attribute_dic[key]
     driver.execute_query(input_cypher, database_="neo4j", )
+
+
+def add_attribute(driver, database_name, point_name, attribute_name, attribute_value):
+    if point_name in MAIN_DATA[database_name]["点数据"]:
+        input_cypher = """MATCH (a{{{name_call}:'{point_name}'}})
+                          SET a.{attribute_name} = '{attribute_value}' 
+                        """ \
+            .format(name_call=MAIN_DATA[database_name]["点数据"][point_name]["名称叫法"],
+                    point_name=point_name,
+                    attribute_name=attribute_name,
+                    attribute_value=attribute_value)
+        MAIN_DATA[database_name]["点数据"][point_name][attribute_name] = attribute_value
+        driver.execute_query(input_cypher, database_="neo4j", )
+
+
+def add_relationship_attribute(driver, database_name, point_name, attribute_name, attribute_value):
+    pass
+
+
+def attribute_preprocess(attribute_dic: dict | str) -> dict | str:
+    """将python中常规的属性键值对转换为neo4j中cypher能接受的数据格式，将key值去掉单双引号来实现
+
+        Args:
+            attribute_dic (dict| str): 可以为存储属性键值对的字典，若为字符串则不进行任何操作
+        Returns:
+            dict: 转换格式之后的字典
+        """
+    if type(attribute_dic) is dict:
+        attribute_dic = ', '.join(f"{k}: '{v}'" for k, v in attribute_dic.items())
+    return attribute_dic

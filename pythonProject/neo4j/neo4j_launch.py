@@ -1,4 +1,5 @@
 import subprocess
+
 def launch_neo4j():
     command = ["neo4j", "console"]
     execution_path = 'neo4j-community-5.17.0/bin'
